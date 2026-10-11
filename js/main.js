@@ -14,6 +14,8 @@ const recipeOutput = document.querySelector('#recipe')
 const apiMessage = document.querySelector('#message')
 const formError = document.querySelector('#error')
 
+const API_URL = 'https://dummyjson.com/recipes'
+
 let errors = []
 let messages = []
 
@@ -25,7 +27,8 @@ let messages = []
 //läsa den sökfras som användaren skriver i formuläret
 function validateForm() {
   errors = []
-  formError.innerHTML = ''
+  formError.textContent = ''
+  apiMessage.innerHTML = ''
   let search = searchInput.value.trim()
   console.log('search :>> ', search)
   // Om sökfältet är tomt
@@ -44,8 +47,9 @@ function validateForm() {
     formError.textContent = errors.join(', ')
     return false
   }
+  // Skicka sökordet 'search' som argument
+  readData(search)
   // retunera true om sökföltet är fylld
-
   return true
 }
 // Validering av sökfältet
@@ -60,3 +64,29 @@ searchForm.addEventListener('submit', (e) => {
     return
   }
 })
+
+// Hantera API-svaret
+async function getData(query) {
+  const response = await fetch(`${API_URL}/search?q=${query}`)
+  // Konvertera json till javascript objekt
+  const data = await response.json()
+  return data
+}
+// Tar emot sökordet och plockar rätt data från API-et
+async function readData(query) {
+  // Rensa gamla sökresultat från skärmen direkt när sökningen startar
+  recipeOutput.innerHTML = ''
+
+  const data = await getData(query)
+  // Kontrollera om listan saknas eller är helt tom
+  if (!data.recipes || data.recipes.length === 0) {
+    messages = [] // Tömer vi arrayen så vi inte spara det galma meddelande
+    messages.push('Inget recept hittades. prova en ny sökfras...')
+    apiMessage.textContent = messages.join(',')
+    return
+  }
+  // Om vi hittade recept, rensa bort det gamla felmeddelandet från skärmen
+  apiMessage.textContent = ''
+  console.log('Första matchande receptet :>> ', data.recipes[0])
+  console.log('Hela listan av matchade recept :>> ', data.recipes)
+}
